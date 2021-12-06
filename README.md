@@ -112,3 +112,13 @@ private final LoginService loginService;
 #### HttpSession소개
 서블릿이 제공하는 HttpSession도 결국 직접만든 SessionManager와 같은 방식으로 동작
 서블릿을 통해 HttpSession을 생성하면 다음과같은 쿠키를 생성, 쿠키이름이 JSESSIONID이고 값은 추정 불가능한 랜덤값이다.
+#### 세션 생성과 조회
+세션을 생성하려면 request.getSession(true) 를 사용하면 된다.
+> public HttpSession getSession(boolean create);
+#### 세션의 create 옵션에 대해 알아보자.
+* request.getSession(true)
+   - 세션이 있으면 기존 세션을 반환한다.
+   - 세션이 없으면 새로운 세션을 생성해서 반환한다.
+* request.getSession(false)
+   - 세션이 있으면 기존 세션을 반환한다.
+   - 세션이 없으면 새로운 세션을 생성하지 않는다. null 을 반환한다.
