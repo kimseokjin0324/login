@@ -145,6 +145,8 @@ private final LoginService loginService;
 ### TrackingMode
 로그인을 처음 시도하면 URL이 다음과 같이 jsessionid 를 포함하고 있는 것을 확인할 수 있다.
 > http://localhost:8080/;jsessionid=F59911518B921DF62D09F0DF8F83F872
+
+
 이것은 웹 브라우저가 쿠키를 지원하지 않을 때 쿠키 대신 URL을 통해서 세션을 유지하는 방법이다. 이
 방법을 사용하려면 URL에 이 값을 계속 포함해서 전달해야 한다. 타임리프 같은 템플릿은 엔진을 통해서
 링크를 걸면 jsessionid 를 URL에 자동으로 포함해준다. 서버 입장에서 웹 브라우저가 쿠키를
@@ -152,5 +154,5 @@ private final LoginService loginService;
 전달한다.
 URL 전달 방식을 끄고 항상 쿠키를 통해서만 세션을 유지하고 싶으면 다음 옵션을 넣어주면 된다. 이렇게
 하면 URL에 jsessionid 가 노출되지 않는다.
-application.properties
-server.servlet.session.tracking-modes=cookie
+> ### application.properties  
+> server.servlet.session.tracking-modes=cookie
