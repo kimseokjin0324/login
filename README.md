@@ -379,3 +379,72 @@ WebMvcConfigurer 가 제공하는 addInterceptors() 를 사용해서 인터셉�
 ##### 정리
 서블릿 필터와 스프링 인터셉터는 웹과 관련된 공통 관심사를 해결하기 위한 기술이다.
 서블릿 필터와 비교해서 스프링 인터셉터가 개발자 입장에서 훨씬 편리하다는 것을 코드로 이해했을 것이다. 특별한 문제가 없다면 인터셉터를 사용하는 것이 좋다
+
+## ArgumentResolver 활용
+ArgumentResolver 를 학습했다. 이번 시간에는 해당 기능을 사용해서 로그인 회원을 조금 편리하게 만들어본다.
+
+### HomeController 수정
+    @GetMapping("/")
+    public String homeLoginV3ArgumentResolver(@Login Member loginMember, Model model) {
+
+        //세션에 회원 데이터가 없으면 home
+        if (loginMember == null) {
+            return "home";
+        }
+        //세션이 유지되면 로그인으로 이동
+        model.addAttribute("member", loginMember);
+        return "loginHome";
+    }
+
+@Login 애노테이션이 있으면 직접 만든 ArgumentResolver가 동작해서 자동으로 세션에 있는 로그인 회원을 찾아주고 만약 세션에 없다면  null을 반환하도록 개발
+### @Login 애노테이션 생성
+    @Target(ElementType.PARAMETER)
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface Login {
+    }
+* @Target(ElementType.PARAMETER) : 파라미터에만 사용
+* @Retention(RetentionPolicy.RUNTIME) : 리플렉션 등을 활용할 수 있도록 런타임까지 애노테이션 정보가 남아있음    
+
+### LoginMemberArgumentResolver 생성
+    @Slf4j
+    public class LoginMemberArgumentResolver implements HandlerMethodArgumentResolver {
+
+    @Override
+    public boolean supportsParameter(MethodParameter parameter) {
+        log.info("supportsParameter 실행");
+
+        boolean hasLoginAnnotation = parameter.hasParameterAnnotation(Login.class);
+        boolean hasMemberType = Member.class.isAssignableFrom(parameter.getParameterType());
+
+        return hasLoginAnnotation&&hasMemberType;   //둘다 true이면 resolveArgument가 실행
+
+    }
+
+    @Override
+    public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer, NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
+        log.info("resolveArgument 실행");
+
+        HttpServletRequest request =(HttpServletRequest) webRequest.getNativeRequest();
+        HttpSession session = request.getSession(false);
+        if(session==null){
+            return null;
+        }
+
+        return session.getAttribute(SessionConst.LOGIN_MEMBER);
+    }
+    }
+    
+* supportsParameter() : @Login 애노테이션이 있으면서 Member 타입이면 해당 ArgumentResolver 가 사용된다.
+* resolveArgument() : 컨트롤러 호출 직전에 호출 되어서 필요한 파라미터 정보를 생성해준다. 여기서는 세션에 있는 로그인 회원 정보인 member 객체를 찾아서 반환해준다. 이후 스프링MVC는 컨트롤러의 메서드를 호출하면서 여기에서 반환된 member 객체를 파라미터에 전달해준다 
+  
+ ### WebConfig에 추가   
+    //ArgumentResolver등록
+    @Override
+    public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
+       resolvers.add(new LoginMemberArgumentResolver());
+    }
+    
+ 앞서 개발한 LoginMemberArgumentResolver를 등록
+ ### 실행
+실행해보면, 결과는 동일하지만, 더 편리하게 로그인 회원 정보를 조회할 수 있다. 이렇게
+ArgumentResolver 를 활용하면 공통 작업이 필요할 때 컨트롤러를 더욱 편리하게 사용할 수 있다.
